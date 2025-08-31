@@ -1,1 +1,109 @@
 ## Place your answers here.
+Podemos ver que se puede generar una vulnerabilidad de buffer overflow en el stack.
+Esto se genera por 3 partes claves:
+1. zookd.c:
+    static void process_client(int fd)
+    {
+    static char env[8192];  /* static variables are not on the stack */
+    static size_t env_len = 8192;
+    char reqpath[4096];
+    const char *errmsg;
+
+    /* get the request line */
+    if ((errmsg = http_request_line(fd, reqpath, env, &env_len)))
+        return http_err(fd, 500, "http_request_line: %s", errmsg);
+        ...
+
+2. http.c:
+    const char *http_request_line(int fd, char *reqpath, char *env, size_t *env_len)
+    {
+    static char buf[8192];      /* static variables are not on the stack */
+    char *sp1, *sp2, *qp, *envp = env;
+
+    /* For lab 2: don't remove this line. */
+    touch("http_request_line");
+
+    if (http_read_line(fd, buf, sizeof(buf)) < 0)
+        return "Socket IO error";
+
+    /* Parse request like "GET /foo.html HTTP/1.0" */
+    sp1 = strchr(buf, ' ');
+    if (!sp1)
+        return "Cannot parse HTTP request (1)";
+    *sp1 = '\0';
+    sp1++;
+    if (*sp1 != '/')
+        return "Bad request path";
+
+    sp2 = strchr(sp1, ' ');
+    if (!sp2)
+        return "Cannot parse HTTP request (2)";
+    *sp2 = '\0';
+    sp2++;
+    ...
+
+    if (http_read_line(fd, buf, sizeof(buf)) < 0)
+        return "Socket IO error";
+    ...
+
+    url_decode(reqpath, sp1);
+
+3. http.c:
+    void url_decode(char *dst, const char *src)
+    {
+    for (;;)
+    {
+        if (src[0] == '%' && src[1] && src[2])
+        {
+            char hexbuf[3];
+            hexbuf[0] = src[1];
+            hexbuf[1] = src[2];
+            hexbuf[2] = '\0';
+
+            *dst = strtol(&hexbuf[0], 0, 16);
+            src += 3;
+        }
+        else if (src[0] == '+')
+        {
+            *dst = ' ';
+            src++;
+        }
+        else
+        {
+            *dst = *src;
+            src++;
+
+            if (*dst == '\0')
+                break;
+        }
+
+        dst++;
+    }
+    }
+
+Podemos ver que process_client reserva un espacio en eel buffer con reqpath[4096].
+
+Por otra partd http_request_line leee la primera linea de HTTP en buf[8192] y luego pasa el path (sp1)
+a url_decode, para que lo copie en reqpath. El problema es que, no hay verificación de longitud en
+url_decode. 
+
+Si el path supera 4096 bytes, url_decode escribe en el buffer mas alla de reqpath,
+vulnerando el frame de process_client y la direccion de retorno.
+
+Ademas, url_decode permite ingresar bytes de la forma %xx (como \x00 con %00 y no se detiene el
+bucle en ese caso), lo que facilita la escritura de codigo malicioso en la pila
+
+Para generar una solicitud HTTP maliciosa, necesitamos que el path sea mayor a 4096 bytes, 
+y que con ese texto se alcance, y sobrescriba, la direccion de retorno de process_client.
+
+Un ejemplo podria ser:
+
+GET /AAAAAAAAA...."codigo malicioso"...AAAAAAAA... HTTP/1.0
+Host: x
+
+En donde despues de "/" ponemos un contenido mayor de 4096 bytes, de esta forma se escribira mas
+alla de reqpath en la pila (direccion de retorno y otras variables), generando un buffer overflow.
+
+Adicionalmente, si queremos generar mas daño, en nuestro "relleno" podemos ingresar algun tipo de
+codigo malicioso que infecte el programa. Por ejemplo, sobreescribir en la direccion de retorno, 
+para que apunte a algun sitio donde hayamos puesto codigo malicioso.
