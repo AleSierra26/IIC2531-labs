@@ -81,7 +81,7 @@ Esto se genera por 3 partes claves:
     }
     }
 
-Podemos ver que process_client reserva un espacio en eel buffer con reqpath[4096].
+Podemos ver que process_client reserva un espacio en el buffer con reqpath[4096].
 
 Por otra partd http_request_line leee la primera linea de HTTP en buf[8192] y luego pasa el path (sp1)
 a url_decode, para que lo copie en reqpath. El problema es que, no hay verificación de longitud en
