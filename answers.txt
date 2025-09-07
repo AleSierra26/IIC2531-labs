@@ -1,4 +1,6 @@
 ## Place your answers here.
+IMPORTANTE: Para ejecutar el exploit 4 se necesita instalar pip3 install pwntools.
+
 Podemos ver que se puede generar una vulnerabilidad de buffer overflow en el stack.
 Esto se genera por 3 partes claves:
 1. zookd.c:
