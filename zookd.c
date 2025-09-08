@@ -57,50 +57,52 @@ static int start_server(const char *portstr)
     return sockfd;
 }
 
-static int run_server(const char *port) {
+static int run_server(const char *port)
+{
     int sockfd = start_server(port);
     for (;;)
     {
-	int cltfd = accept(sockfd, NULL, NULL);
-	int pid;
-	int status;
+        int cltfd = accept(sockfd, NULL, NULL);
+        int pid;
+        int status;
 
-	if (cltfd < 0)
-	    err(1, "accept");
+        if (cltfd < 0)
+            err(1, "accept");
 
-	/* fork a new process for each client process, because the process
-	 * builds up state specific for a client (e.g. cookie and other
-	 * enviroment variables that are set by request). We want to get rid off
-	 * that state when we have processed the request and start the next
-	 * request in a pristine state.
+        /* fork a new process for each client process, because the process
+         * builds up state specific for a client (e.g. cookie and other
+         * enviroment variables that are set by request). We want to get rid off
+         * that state when we have processed the request and start the next
+         * request in a pristine state.
          */
-	switch ((pid = fork()))
-	{
-	case -1:
-	    err(1, "fork");
+        switch ((pid = fork()))
+        {
+        case -1:
+            err(1, "fork");
 
-	case 0:
-	    process_client(cltfd);
-	    exit(0);
-	    break;
+        case 0:
+            process_client(cltfd);
+            exit(0);
+            break;
 
-	default:
-	    close(cltfd);
-	    pid = wait(&status);
-	    if (WIFSIGNALED(status)) {
-		printf("Child process %d terminated incorrectly, receiving signal %d\n",
-		       pid, WTERMSIG(status));
-	    }
-	    break;
-	}
+        default:
+            close(cltfd);
+            pid = wait(&status);
+            if (WIFSIGNALED(status))
+            {
+                printf("Child process %d terminated incorrectly, receiving signal %d\n",
+                       pid, WTERMSIG(status));
+            }
+            break;
+        }
     }
 }
 
 static void process_client(int fd)
 {
-    static char env[8192];  /* static variables are not on the stack */
+    static char env[8192]; /* static variables are not on the stack */
     static size_t env_len = 8192;
-    char reqpath[4096];
+    char reqpath[8192];
     const char *errmsg;
 
     /* get the request line */
@@ -111,14 +113,14 @@ static void process_client(int fd)
 
     /* get all headers */
     if ((errmsg = http_request_headers(fd)))
-      http_err(fd, 500, "http_request_headers: %s", errmsg);
+        http_err(fd, 500, "http_request_headers: %s", errmsg);
     else
-      http_serve(fd, getenv("REQUEST_URI"));
+        http_serve(fd, getenv("REQUEST_URI"));
 
     close(fd);
 }
 
 void accidentally(void)
 {
-       __asm__("mov 16(%%rbp), %%rdi": : :"rdi");
+    __asm__("mov 16(%%rbp), %%rdi" : : : "rdi");
 }
