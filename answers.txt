@@ -1,4 +1,5 @@
 ## Place your answers here.
+Parte 1:
 Podemos ver que se puede generar una vulnerabilidad de buffer overflow en el stack.
 Esto se genera por 3 partes claves:
 1. zookd.c:
@@ -107,3 +108,78 @@ alla de reqpath en la pila (direccion de retorno y otras variables), generando u
 Adicionalmente, si queremos generar mas daño, en nuestro "relleno" podemos ingresar algun tipo de
 codigo malicioso que infecte el programa. Por ejemplo, sobreescribir en la direccion de retorno, 
 para que apunte a algun sitio donde hayamos puesto codigo malicioso.
+
+
+Parte 4:
+1. Otra vulnerabilidad que pude encontrar es la nula verificacion del path en la request.
+    A lo que me refiero es que, en http_request_line, no se verifica si el path tiene algun
+    tipo de secuencia especial, como "../" o "/./", que permitan salir del directorio raiz
+    (root_dir) y acceder a archivos fuera de este. En particular, se podria acceder a
+    archivos sensibles del sistema, como /etc/passwd, si el servidor tiene los permisos
+    necesarios. 
+    Paso 1: El usuario manda una request con un path que contenga "../" para salir
+    del directorio raiz. GET /../../../../etc/passwd HTTP/1.0
+    Paso 2: El servidor procesa la request y concatena el path con root_dir.
+    http_request_line:
+    url_decode(reqpath, sp1);
+    envp += sprintf(envp, "REQUEST_URI=%s", reqpath) + 1; 
+
+    process_client:
+    http_serve(fd, getenv("REQUEST_URI"));
+
+    http_serve:
+    getcwd(pn, sizeof(pn));
+    strncat(pn, name, sizeof(pn) - strlen(pn) - 1);
+    
+    Paso 3: El servidor accede al archivo fuera de root_dir, en este caso /etc/passwd, y se lo 
+    envia al cliente con http_serve_file().
+
+    Con esto el atacante puede leer archivos sensibles del sistema, como /etc/passwd, archivos
+    de configuracion, logs, etc, robar codigo fuente y ejecutar scrripts maliciosos.
+    Como limitaciones tenemos que solo puede acceder a archivos que el usuario del proceso
+    del servidor tenga permiso de leer, y si el servidor en un contenedor, el daño se limita a 
+    ese entorno.
+    La vulnerabilidad funciona porque concatenar cadenas no tiene en cuenta secuencias de escape
+    como ../, rutas absolutas, o links dentro del sistema que apunten fuera del root.
+    Esto se puede solucionar normalizando la ruta con realpath() y verificando que la ruta
+    resultante este dentro de root_dir o rechazando secuencias peligrosas en el path. Si el
+    path contiene .., //, o empieza con /, responder con 403 Forbidden.
+
+2. Otra vulnerabilidad que pude encontrar es el bloqueo del sistema (DoS). En run_server() el 
+    proceso padre hace accept(), fork() y luego hace wait(&status) y bloquea hasta que ese hijo 
+    termine. Eso significa que el padre deja de aceptar nuevas conexiones mientras espera a que el 
+    child termine, lo que genera quen un usuari malicioso puede dejar al child esperando, 
+    provocando que el servidor deje de atender nuevas conexiones.
+    Podemos ver que:
+    static int run_server(const char *port)
+    {
+    ...
+    int cltfd = accept(sockfd, NULL, NULL);
+    ...
+    switch ((pid = fork())) {
+    ...
+    case 0:
+        process_client(cltfd);
+        exit(0);
+    default:
+        close(cltfd);
+        pid = wait(&status);
+    ...
+    }
+    El problema con esto es que cuando el padre hace hace wait() se bloquea hasta ese hijo termine.
+    Si el hijo está bloqueado esperando datos, entonces el padre permanece bloqueado también.
+    Mientras el padre esté bloqueado, no se vuelve a llamar accept(), es decir, las nuevas 
+    conexiones fallan o esperan.
+    Para explotar esta vulnerabilidad, un atacante puede abrir una conexión al servidor y no
+    enviar datos, dejando al child esperando. Esto bloquea al padre en wait(), impidiendo
+    que atienda nuevas conexiones, causando una denegación de servicio (DoS).
+    El atacante puede lograr una caida parcial o total del servicio, dependiendo de la cantidad
+    de conexiones que abra y deje esperando.
+    La unica limitacion del atacante es la cantidad de conexiones que el sistema permita abrir, y
+    la capacidad misma de abrir conexiones con el servidor.
+    Esto funciona porque wait() es bloqueante, es decir, espera hasta que un hijo termine antes de
+    seguir aceptando a otros (o ejecutar cualquier cosa en realidad).
+    Una solucion simple es usar un manejo de señales para los hijos terminados. Es decir, en vez
+    de usar wait() bloqueante, los hijos mandaran una señal cuando terminen, y el padre puede
+    manejar esa señal para limpiar los procesos hijos terminados, de esta forma el padre no se 
+    bloquea y puede seguir aceptando nuevas conexiones, mientras sus hijos realizan sus procesos.
