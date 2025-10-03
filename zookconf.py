@@ -192,7 +192,7 @@ class Container():
     def make_container(self):
         b = lxc.Container(BASE)
         if not b.defined:
-            bc = Container(None, "~base", None, self.globalconf)
+            bc = Container(None, "base", None, self.globalconf)
 
             # If this container is defined it's probably partially configured,
             # so we destroy and recreate it
@@ -201,7 +201,7 @@ class Container():
                     self.errormsg("Failed to shut down container. Try rebooting your VM.")
                     sys.exit(1)
 
-                bc = Container(None, "~base", None, self.globalconf)
+                bc = Container(None, "base", None, self.globalconf)
 
             bc.make_base()
 
