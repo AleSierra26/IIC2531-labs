@@ -161,6 +161,71 @@ class Container():
         path = "/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/snap/bin:/usr/local/sbin:/sbin:/usr/sbin"
         ev = ["PATH=%s" % path]
 
+        """codes added are shown below"""
+
+        # the source file
+        source_file = "/etc/apt/sources.list"
+        # the back-up source file
+        source_file_bkp = "/etc/apt/sources.list.bkp"
+
+        # concatenate the /etc/apt/sources.list
+        print("\nStart concatenating /etc/apt/sources.list")
+        r=self.run_cmd(["cat", source_file])
+        if r != 0:
+            self.errormsg("Failed concatenating /etc/apt/sources.list")
+            sys.exit(1)
+        print("Concatenating /etc/apt/sources.list success.\n")
+
+        # back up the source file
+        print("Backing up the "+source_file+" to "+source_file_bkp)
+        r=self.run_cmd(["cp", source_file, source_file_bkp])
+        if r != 0:
+            self.errormsg("Failed backing up "+source_file)
+            sys.exit(1)
+        print("Backing up "+source_file+" success.\n")
+
+        # change the mode of the back-up file
+        r=self.run_cmd(["chmod", "+rw", source_file])
+        if r != 0:
+            self.errormsg("Failed chmod "+source_file)
+            sys.exit(1)
+
+        # unsupported source url
+        current_url = "http://archive.ubuntu.com/ubuntu"
+        # old source url
+        old_release_url = "http://old-releases.ubuntu.com/ubuntu/"
+        # updating resources
+        r = self.run_cmd(["sh", "-c", "echo '# changing sources to old-releases' > "+source_file])
+        if r!=0:
+                self.errormsg("Failed updating "+source_file)
+                sys.exit(1)
+        echo_lines=["deb "+old_release_url+" impish main restricted universe multiverse",
+                    "deb "+old_release_url+" impish-updates main restricted universe multiverse",
+                    "deb "+old_release_url+" impish-security main restricted universe multiverse"]
+        for line in echo_lines:
+            r=self.run_cmd(["sh","-c","echo "+line+" >> "+source_file])
+            if r!=0:
+                self.errormsg("Failed updating "+source_file)
+                sys.exit(1)
+
+        # install packages for zoobar
+        # terminate early if anything goes wrong here
+        r = self.run_cmd(["apt-get", "update"], extra_env_vars=ev)
+        if r != 0:
+            self.errormsg("Failed updating apt package info")
+            sys.exit(1)
+        # need to install following packages
+        r = self.run_cmd(["apt-get", "install", "-y", "software-properties-common"])
+        if r != 0:
+            self.errormsg("Failed apt-get software-properties-common")
+            sys.exit(1)
+        r = self.run_cmd(["add-apt-repository","universe"])
+        if r != 0:
+            self.errormsg("Failed add-apt-repository universe")
+            sys.exit(1)
+
+        """ end of added codes """
+
         # install packages for zoobar
         # terminate early if anything goes wrong here
         r = self.run_cmd(["apt-get", "update"], extra_env_vars=ev)
