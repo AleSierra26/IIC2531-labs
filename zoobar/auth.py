@@ -4,45 +4,40 @@ from debug import *
 import hashlib
 import random
 
-def newtoken(db, cred):
-    hashinput = "%s%.10f" % (cred.password, random.random())
-    cred.token = hashlib.md5(hashinput.encode('utf-8')).hexdigest()
+def newtoken(db, person):
+    hashinput = "%s%.10f" % (person.password, random.random())
+    person.token = hashlib.md5(hashinput.encode('utf-8')).hexdigest()
     db.commit()
-    return cred.token
+    return person.token
 
 def login(username, password):
-    db = cred_setup()
-    cred = db.query(Cred).get(username)
-    if not cred:
+    db = person_setup()
+    person = db.query(Person).get(username)
+    if not person:
         return None
-    if cred.password == password:
-        return newtoken(db, cred)
+    if person.password == password:
+        return newtoken(db, person)
     else:
         return None
 
 def register(username, password):
-    db = cred_setup()
-    cred = db.query(Cred).get(username)
-    if cred:
+    db = person_setup()
+    person = db.query(Person).get(username)
+    if person:
         return None
-    newcred = Cred()
-    newcred.username = username
-    newcred.password = password
-    db.add(newcred)
+    newperson = Person()
+    newperson.username = username
+    newperson.password = password
+    db.add(newperson)
     db.commit()
-    persondb = person_setup()
-    existing = persondb.query(Person).get(username)
-    if not existing:
-        p = Person()
-        p.username = username
-        persondb.add(p)
-        persondb.commit()
-    return newtoken(db, newcred)
+    return newtoken(db, newperson)
 
 def check_token(username, token):
-    db = cred_setup()
-    cred = db.query(Cred).get(username)
-    if cred and cred.token == token:
+    db = person_setup()
+    person = db.query(Person).get(username)
+    if person and person.token == token:
         return True
     else:
         return False
+
+    

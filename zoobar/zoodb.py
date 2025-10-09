@@ -6,19 +6,14 @@ from debug import *
 
 PersonBase = declarative_base()
 TransferBase = declarative_base()
-CredBase = declarative_base()
 
 class Person(PersonBase):
     __tablename__ = "person"
     username = Column(String(128), primary_key=True)
-    zoobars = Column(Integer, nullable=False, default=10)
-    profile = Column(String(5000), nullable=False, default="")
-
-class Cred(CredBase):
-    __tablename__ = "cred"
-    username = Column(String(128), primary_key=True)
     password = Column(String(128))
     token = Column(String(128))
+    zoobars = Column(Integer, nullable=False, default=10)
+    profile = Column(String(5000), nullable=False, default="")
 
 class Transfer(TransferBase):
     __tablename__ = "transfer"
@@ -43,9 +38,6 @@ def dbsetup(name, base):
 
 def person_setup():
     return dbsetup("person", PersonBase)
-
-def cred_setup():
-    return dbsetup("cred", CredBase)
 
 def transfer_setup():
     return dbsetup("transfer", TransferBase)
