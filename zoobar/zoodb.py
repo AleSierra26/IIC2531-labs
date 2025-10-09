@@ -22,15 +22,6 @@ class Transfer(TransferBase):
     recipient = Column(String(128))
     amount = Column(Integer)
     time = Column(String)
-    
-class Cred(PersonBase):
-    __tablename__ = "cred"
-    username = Column(String(128), primary_key=True)
-    password = Column(String(128))
-    token = Column(String(128))
-
-def cred_setup():
-    return dbsetup("cred", PersonBase)
 
 def dbsetup(name, base):
     thisdir = os.path.dirname(os.path.abspath(__file__))

@@ -3,7 +3,7 @@ from functools import wraps
 from debug import *
 from zoodb import *
 
-import auth_client as auth
+import auth
 import bank
 import random
 
