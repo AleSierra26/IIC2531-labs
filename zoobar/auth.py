@@ -8,7 +8,8 @@ import pbkdf2
 
 def newtoken(db, cred):
     hashinput = "%s%.10f" % (cred.password, random.random())
-    cred.token = hashlib.md5(hashinput).hexdigest()
+    cred.token = hashlib.md5(hashinput.encode()).hexdigest()
+
     db.commit()
     return cred.token
 
@@ -35,7 +36,8 @@ def register(username, password):
     db_person.add(newperson)
     db_person.commit()
     
-    salt = os.urandom(32).encode('hex')
+    salt = os.urandom(32).hex()
+
     password = pbkdf2.PBKDF2(password,salt).hexread(32) 
  
     db_cred = cred_setup()
