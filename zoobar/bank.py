@@ -62,6 +62,14 @@ def get_log(username):
         tt['sender'] = item.sender
         tt['recipient'] = item.recipient
         tt['amount'] = item.amount
-        retlist.append(tt)            
+        retlist.append(tt)      
+        
+def register_user(username):
+    db = person_setup()
+    if not db.query(Person).get(username):
+        p = Person(username=username, zoobars=10)
+        db.add(p)
+        db.commit()
+      
 
     return retlist

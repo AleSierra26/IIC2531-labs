@@ -6,7 +6,11 @@ from debug import *
 
 class BankRpcServer(rpclib.RpcServer):
     def rpc_balance(self,username):
-        return bank.balance(username)        
+        return bank.balance(username)       
+    
+    def rpc_register_user(self, username):
+        return bank.register_user(username)
+ 
 
     def rpc_transfer(self,sender,recipient,zoobars):
         return bank.transfer(sender,recipient,zoobars)
