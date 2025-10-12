@@ -5,12 +5,8 @@ import time
 
 def transfer(sender, recipient, zoobars):
     persondb = person_setup()
-    bankdb = bank_setup()
-    senderp = bankdb.query(Bank).get(sender)
-    recipientp = bankdb.query(Bank).get(recipient)
-
-    if not senderp or not recipientp:
-        return None
+    senderp = persondb.query(Person).get(sender)
+    recipientp = persondb.query(Person).get(recipient)
 
     sender_balance = senderp.zoobars - zoobars
     recipient_balance = recipientp.zoobars + zoobars
@@ -20,7 +16,7 @@ def transfer(sender, recipient, zoobars):
 
     senderp.zoobars = sender_balance
     recipientp.zoobars = recipient_balance
-    bankdb.commit()
+    persondb.commit()
 
     transfer = Transfer()
     transfer.sender = sender
@@ -32,44 +28,21 @@ def transfer(sender, recipient, zoobars):
     transferdb.add(transfer)
     transferdb.commit()
 
-def check_in(username):
-    bankdb = bank_setup()
-    user = bankdb.query(Bank).get(username)
-    if user:
-       return
- 
-    bank = Bank()
-    bank.username = username
-    bankdb.add(bank)
-    bankdb.commit()
-
-
 def balance(username):
-    db = bank_setup()
-    bank = db.query(Bank).get(username)
-    if not bank:
-        return None
-    return bank.zoobars
+    db = person_setup()
+    person = db.query(Person).get(username)
+    return person.zoobars
 
 def get_log(username):
     db = transfer_setup()
-    ret = db.query(Transfer).filter(or_(Transfer.sender==username,
-                                         Transfer.recipient==username))
-    retlist=[] 
-    for item in ret:
-        tt = {}
-        tt['time']= item.time
-        tt['sender'] = item.sender
-        tt['recipient'] = item.recipient
-        tt['amount'] = item.amount
-        retlist.append(tt)      
-        
-def register_user(username):
-    db = person_setup()
-    if not db.query(Person).get(username):
-        p = Person(username=username, zoobars=10)
-        db.add(p)
-        db.commit()
-      
+    l = db.query(Transfer).filter(or_(Transfer.sender==username,
+                                      Transfer.recipient==username))
+    r = []
+    for t in l:
+       r.append({'time': t.time,
+                 'sender': t.sender ,
+                 'recipient': t.recipient,
+                 'amount': t.amount })
+    return r 
 
-    return retlist
+
