@@ -18,7 +18,8 @@ class BankRpcServer(rpclib.RpcServer):
         return bank.check_in(username)
 
 
-(_,dummy_zookld_fd,sockpath) = sys.argv
+if len(sys.argv) != 2:
+    print(sys.argv[0], "too few args")
 
 s = BankRpcServer()
-s.run_sockpath_fork(sockpath)
+s.run_fork(sys.argv[1])
