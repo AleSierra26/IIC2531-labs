@@ -52,9 +52,7 @@ def balance(username):
     return bank.zoobars
 
 def get_log(username):
-    print "bank.py get_log username=%s" % username
     db = transfer_setup()
-    # get the orm object,see:http://stackoverflow.com/questions/16450694/how-do-i-write-a-query-to-get-sqlalchemy-objects-from-relationship
     ret = db.query(Transfer).filter(or_(Transfer.sender==username,
                                          Transfer.recipient==username))
     retlist=[] 
