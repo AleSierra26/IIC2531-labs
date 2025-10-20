@@ -15,23 +15,14 @@ def register(username, password):
         token = c.call('register', username=username, password=password)
 
     if token:
-        from zoodb import person_setup, bank_setup, Person, Bank
+        from zoodb import person_setup, Person
         db_person = person_setup()
         if not db_person.query(Person).get(username):
             newperson = Person()
             newperson.username = username
             db_person.add(newperson)
             db_person.commit()
-
-            db_bank = bank_setup()
-            newbank = Bank()
-            newbank.username = username
-            newbank.balance = 10
-            db_bank.add(newbank)
-            db_bank.commit()
-
     return token
-
 
 
 def check_token(username, token):
