@@ -6,7 +6,7 @@ import readconf
 
 def _connect():
     conf = readconf.read_conf ()
-    host = ('10.1.3.4', 8081)
+    host = ('10.1.3.4', 8082)
     return rpclib.client_connect(host)
 
 def login(username, password) :
