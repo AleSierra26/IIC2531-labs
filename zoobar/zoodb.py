@@ -6,11 +6,12 @@ from debug import *
 
 PersonBase = declarative_base()
 TransferBase = declarative_base()
-CredBase = declarative_base()
 
 class Person(PersonBase):
     __tablename__ = "person"
     username = Column(String(128), primary_key=True)
+    password = Column(String(128))
+    token = Column(String(128))
     zoobars = Column(Integer, nullable=False, default=10)
     profile = Column(String(5000), nullable=False, default="")
 
@@ -22,12 +23,6 @@ class Transfer(TransferBase):
     amount = Column(Integer)
     time = Column(String)
 
-class Cred(CredBase):
-    __tablename__ = "cred"
-    username = Column(String(128), primary_key=True)
-    password = Column(String(128))
-    token = Column(String(128))
-    salt = Column(String(128))
 def dbsetup(name, base):
     thisdir = os.path.dirname(os.path.abspath(__file__))
     dbdir   = os.path.join(thisdir, "db", name)
@@ -46,8 +41,6 @@ def person_setup():
 
 def transfer_setup():
     return dbsetup("transfer", TransferBase)
-def cred_setup():
-    return dbsetup("cred", CredBase)
 
 import sys
 if __name__ == "__main__":
@@ -60,7 +53,5 @@ if __name__ == "__main__":
         person_setup()
     elif cmd == 'init-transfer':
         transfer_setup()
-    elif cmd == 'init-cred':
-        cred_setup()
     else:
         raise Exception("unknown command %s" % cmd)
