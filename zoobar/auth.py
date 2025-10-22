@@ -37,7 +37,7 @@ def register(username: str, password: str):
     db_cred.add(newcred)
     db_cred.commit()
 
-    person = Person(username=username, zoobars=10, profile="")
+    person = Person(username=username, profile="")
     db_person.add(person)
     db_person.commit()
 
