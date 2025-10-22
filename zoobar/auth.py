@@ -1,47 +1,42 @@
 from zoodb import *
 from debug import *
-
 import hashlib
-import random
 import os
+import secrets  # más seguro que random para criptografía
 import pbkdf2
 
-def newtoken(db, cred):
-    hashinput = "%s%.10f" % (cred.password, random.random())
-    cred.token = hashlib.md5(hashinput.encode()).hexdigest()
+# --- Configuración de parámetros criptográficos ---
+ITERATIONS = 100_000  # aumenta el costo del PBKDF2
+SALT_SIZE = 16        # 128 bits de sal (suficiente)
+TOKEN_BYTES = 32      # 256 bits de token
 
+# -------------------------------------------------
+
+def hash_password(password: str, salt: bytes) -> str:
+    """Devuelve el hash PBKDF2 del password usando la sal dada."""
+    # Usamos la versión binaria del password
+    return pbkdf2.PBKDF2(password.encode(), salt, iterations=ITERATIONS).hexread(32)
+
+def newtoken(db, cred):
+    """Genera un nuevo token aleatorio para el usuario."""
+    # secrets.token_hex produce 64 caracteres hexadecimales (32 bytes)
+    cred.token = secrets.token_hex(TOKEN_BYTES)
     db.commit()
     return cred.token
 
-def login(username, password):
+def register(username: str, password: str):
+    """Crea un nuevo usuario y guarda el hash y la sal."""
     db_person = person_setup()
-    person = db_person.query(Person).get(username)
-    if not person:
+    if db_person.query(Person).get(username):
         return None
 
     db_cred = cred_setup()
-    cred = db_cred.query(Cred).get(username)
-    if not cred:
+    if db_cred.query(Cred).get(username):
         return None
 
-    salt_bytes = bytes.fromhex(cred.salt)
-    hashed = pbkdf2.PBKDF2(password, salt_bytes).hexread(32)
+    salt = os.urandom(SALT_SIZE)
+    hashed = hash_password(password, salt)
 
-    if cred.password == hashed:
-        return newtoken(db_cred, cred)
-    return None
-
-
-def register(username, password):
-    db_person = person_setup()
-    person = db_person.query(Person).get(username)
-    if person:
-        return None
-
-    salt = os.urandom(32)
-    hashed = pbkdf2.PBKDF2(password, salt).hexread(32)
-
-    db_cred = cred_setup()
     newcred = Cred()
     newcred.username = username
     newcred.password = hashed
@@ -49,14 +44,33 @@ def register(username, password):
     db_cred.add(newcred)
     db_cred.commit()
 
+    # también crea el registro en la tabla Person
+    person = Person(username=username, zoobars=10, profile="")
+    db_person.add(person)
+    db_person.commit()
+
     return newtoken(db_cred, newcred)
 
+def login(username: str, password: str):
+    """Valida las credenciales y retorna un nuevo token si es correcto."""
+    db_cred = cred_setup()
+    cred = db_cred.query(Cred).get(username)
+    if not cred:
+        return None
 
+    try:
+        salt_bytes = bytes.fromhex(cred.salt)
+    except Exception:
+        return None  # si la sal está corrupta
 
-def check_token(username, token):
+    hashed = hash_password(password, salt_bytes)
+    if hashed != cred.password:
+        return None
+
+    return newtoken(db_cred, cred)
+
+def check_token(username: str, token: str) -> bool:
+    """Verifica si el token del usuario es válido."""
     db = cred_setup()
     cred = db.query(Cred).get(username)
-    if cred and cred.token == token:
-        return True
-    else:
-        return False
+    return bool(cred and cred.token == token)

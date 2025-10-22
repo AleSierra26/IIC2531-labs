@@ -20,8 +20,7 @@ class User(object):
 
     def loginCookie(self, username, token):
         self.setPerson(username, token)
-        return "%s %s" % (username, token)   # <-- cambia '#' por espacio
-
+        return "%s#%s" % (username, token)
 
     def logout(self):
         self.person = None
@@ -43,10 +42,9 @@ class User(object):
     def checkCookie(self, cookie):
         if cookie is None:
             return
-        (username, token) = cookie.split(" ", 1)  # <-- cambia rsplit("#", 1)
+        (username, token) = cookie.rsplit("#", 1)
         if auth.check_token(username, token):
             self.setPerson(username, token)
-
 
     def setPerson(self, username, token):
         persondb = person_setup()
