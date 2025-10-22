@@ -19,7 +19,7 @@ def balance(username):
         conn = _connect_to_bank()
         return conn.call('balance', username=username)
     except Exception as e:
-        debug("bank_client.balance: RPC error: %r" % (e,))
+        log("bank_client.balance: RPC error: %r" % (e,))
         return None
 
 def create_account(username, initial_balance=10):
@@ -27,7 +27,7 @@ def create_account(username, initial_balance=10):
         conn = _connect_to_bank()
         return conn.call('create_account', username=username, initial_balance=initial_balance)
     except Exception as e:
-        debug("bank_client.create_account: RPC error: %r" % (e,))
+        log("bank_client.create_account: RPC error: %r" % (e,))
         return False
 
 def transfer(sender, recipient, zoobars, token):
@@ -35,7 +35,7 @@ def transfer(sender, recipient, zoobars, token):
         conn = _connect_to_bank()
         return conn.call('transfer', sender=sender, recipient=recipient, zoobars=zoobars, token=token)
     except Exception as e:
-        debug("bank_client.transfer: RPC error: %r" % (e,))
+        log("bank_client.transfer: RPC error: %r" % (e,))
         return False
 
 def get_log(username):
@@ -43,5 +43,5 @@ def get_log(username):
         conn = _connect_to_bank()
         return conn.call('get_log', username=username)
     except Exception as e:
-        debug("bank_client.get_log: RPC error: %r" % (e,))
+        log("bank_client.get_log: RPC error: %r" % (e,))
         return []

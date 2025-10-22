@@ -39,7 +39,7 @@ class User(object):
                 import bank
                 bank.create_account(username, 10)
             except Exception as e:
-                debug("addRegistration: create_account RPC error: %r" % (e,))
+                log("addRegistration: create_account RPC error: %r" % (e,))
             return self.loginCookie(username, token)
         else:
             return None

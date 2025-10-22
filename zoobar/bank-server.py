@@ -29,7 +29,7 @@ class BankRpcServer(rpclib.RpcServer):
 
     def rpc_transfer(self, sender, recipient, zoobars, token):
         if not auth_client.check_token(sender, token):
-            debug("bank_server: invalid token for sender=%s" % sender)
+            log("bank_server: invalid token for sender=%s" % sender)
             return False
 
         bankdb = bank_setup()
@@ -39,7 +39,7 @@ class BankRpcServer(rpclib.RpcServer):
         recipient_acc = bankdb.query(Bank).get(recipient)
 
         if not sender_acc or not recipient_acc:
-            debug("bank_server.transfer: Bank missing sender=%s recipient=%s" % (sender, recipient))
+            log("bank_server.transfer: Bank missing sender=%s recipient=%s" % (sender, recipient))
             return False
 
         try:
@@ -50,7 +50,7 @@ class BankRpcServer(rpclib.RpcServer):
         new_sender = sender_acc.balance - zoobars
         new_recipient = recipient_acc.balance + zoobars
         if new_sender < 0 or new_recipient < 0:
-            debug("bank_server.transfer: insufficient funds or overflow")
+            log("bank_server.transfer: insufficient funds or overflow")
             return False
 
         # update balances
@@ -69,7 +69,7 @@ class BankRpcServer(rpclib.RpcServer):
 
         return True
     def rpc_get_log(self, username):
-        debug(f"bank_server: fetching log for {username}")
+        log(f"bank_server: fetching log for {username}")
         db = transfer_setup()
         logs = db.query(Transfer).filter_by(sender=username).all()
         result = []

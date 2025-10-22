@@ -20,7 +20,7 @@ def login(username, password):
         conn = _connect_to_auth()
         return conn.call('login', **kwargs)
     except Exception as e:
-        debug("auth_client.login: RPC error: %r" % (e,))
+        log("auth_client.login: RPC error: %r" % (e,))
         return None
 
 def register(username, password):
@@ -29,7 +29,7 @@ def register(username, password):
         conn = _connect_to_auth()
         return conn.call('register', **kwargs)
     except Exception as e:
-        debug("auth_client.register: RPC error: %r" % (e,))
+        log("auth_client.register: RPC error: %r" % (e,))
         return None
 
 def check_token(username, token):
@@ -38,5 +38,5 @@ def check_token(username, token):
         conn = _connect_to_auth()
         return conn.call('check_token', **kwargs)
     except Exception as e:
-        debug("auth_client.check_token: RPC error: %r" % (e,))
+        log("auth_client.check_token: RPC error: %r" % (e,))
         return False
