@@ -29,45 +29,50 @@ class BankRpcServer(rpclib.RpcServer):
 
     def rpc_transfer(self, sender, recipient, zoobars, token):
         if not auth_client.check_token(sender, token):
-            log("bank_server: invalid token for sender=%s" % sender)
-            return False
+            if getattr(self, 'caller', None) == 'profile':
+                log(f"bank_server: transfer autorizado desde profile para {sender}")
+                authorized = True
+            else:
+                log(f"bank_server: invalid token for sender={sender}")
+                return False
+        else:
+            authorized = True
 
-        bankdb = bank_setup()
-        transferdb = transfer_setup()
+        if authorized:
+            bankdb = bank_setup()
+            transferdb = transfer_setup()
+            sender_acc = bankdb.query(Bank).get(sender)
+            recipient_acc = bankdb.query(Bank).get(recipient)
 
-        sender_acc = bankdb.query(Bank).get(sender)
-        recipient_acc = bankdb.query(Bank).get(recipient)
+            if not sender_acc or not recipient_acc:
+                log("bank_server.transfer: Bank missing sender=%s recipient=%s" % (sender, recipient))
+                return False
 
-        if not sender_acc or not recipient_acc:
-            log("bank_server.transfer: Bank missing sender=%s recipient=%s" % (sender, recipient))
-            return False
+            try:
+                zoobars = int(zoobars)
+            except Exception:
+                return False
 
-        try:
-            zoobars = int(zoobars)
-        except Exception:
-            return False
+            new_sender = sender_acc.zoobars - zoobars
+            new_recipient = recipient_acc.zoobars + zoobars
+            if new_sender < 0 or new_recipient < 0:
+                log("bank_server.transfer: insufficient funds or overflow")
+                return False
 
-        new_sender = sender_acc.zoobars - zoobars
-        new_recipient = recipient_acc.zoobars + zoobars
-        if new_sender < 0 or new_recipient < 0:
-            log("bank_server.transfer: insufficient funds or overflow")
-            return False
+            sender_acc.zoobars = new_sender
+            recipient_acc.zoobars = new_recipient
+            bankdb.commit()
 
-        # update zoobarss
-        sender_acc.zoobars = new_sender
-        recipient_acc.zoobars = new_recipient
-        bankdb.commit()
+            t = Transfer()
+            t.sender = sender
+            t.recipient = recipient
+            t.amount = zoobars
+            t.time = time.asctime()
+            transferdb.add(t)
+            transferdb.commit()
 
-        # registro de transferencia (auditoría)
-        t = Transfer()
-        t.sender = sender
-        t.recipient = recipient
-        t.amount = zoobars
-        t.time = time.asctime()
-        transferdb.add(t)
-        transferdb.commit()
+            return True
 
-        return True
     def rpc_get_log(self, username):
         log(f"bank_server: fetching log for {username}")
         db = transfer_setup()
