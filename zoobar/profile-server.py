@@ -52,7 +52,6 @@ def run_profile(pcode, profile_api_client):
 
 class ProfileServer(rpclib.RpcServer):
     def rpc_run(self, pcode, user, visitor):
-        # UID para ejecutar sandbox (no-root)
         SBOX_UID = 6858
         SBOX_GID = 6858
 
