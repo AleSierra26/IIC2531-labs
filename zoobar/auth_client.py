@@ -6,16 +6,12 @@ sys.path.append(os.getcwd())
 import readconf
 
 def _connect_to_auth():
-    # lookup_host normalmente devuelve una tupla (ip, port) o similar
     host = readconf.read_conf().lookup_host('auth')
-    # defensive: si lookup_host devuelve un objeto con campos, adaptarlo
     if isinstance(host, tuple) or isinstance(host, list):
         return rpclib.client_connect((host[0], int(host[1])))
-    # si lookup_host ya devolviera un string "ip:port", intentar parsearlo
     if isinstance(host, str) and ':' in host:
         ip, port = host.split(':', 1)
         return rpclib.client_connect((ip, int(port)))
-    # fallback: tratar de conectar a localhost:8081
     return rpclib.client_connect(('127.0.0.1', 8081))
 
 def login(username, password):
