@@ -13,7 +13,7 @@ class BankRpcServer(rpclib.RpcServer):
         acc = db.query(Bank).get(username)
         if not acc:
             return None
-        return acc.balance
+        return acc.zoobars
 
     def rpc_create_account(self, username, initial_balance=10):
         db = bank_setup()
@@ -22,7 +22,7 @@ class BankRpcServer(rpclib.RpcServer):
             return False
         newacc = Bank()
         newacc.username = username
-        newacc.balance = int(initial_balance)
+        newacc.zoobars = int(initial_balance)
         db.add(newacc)
         db.commit()
         return True
@@ -47,15 +47,15 @@ class BankRpcServer(rpclib.RpcServer):
         except Exception:
             return False
 
-        new_sender = sender_acc.balance - zoobars
-        new_recipient = recipient_acc.balance + zoobars
+        new_sender = sender_acc.zoobars - zoobars
+        new_recipient = recipient_acc.zoobars + zoobars
         if new_sender < 0 or new_recipient < 0:
             log("bank_server.transfer: insufficient funds or overflow")
             return False
 
-        # update balances
-        sender_acc.balance = new_sender
-        recipient_acc.balance = new_recipient
+        # update zoobarss
+        sender_acc.zoobars = new_sender
+        recipient_acc.zoobars = new_recipient
         bankdb.commit()
 
         # registro de transferencia (auditoría)

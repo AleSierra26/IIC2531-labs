@@ -25,7 +25,7 @@ class Transfer(TransferBase):
 class Bank(BankBase):
     __tablename__ = "bank"
     username = Column(String(128), primary_key=True)
-    balance = Column(Integer, nullable=False, default=0)
+    zoobars = Column(Integer, nullable=False, default=0)
 
 class Cred(CredBase):
     __tablename__ = "cred"

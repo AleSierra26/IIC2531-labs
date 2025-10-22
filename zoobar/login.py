@@ -56,7 +56,7 @@ class User(object):
         persondb = person_setup()
         self.person = persondb.query(Person).get(username)
         self.token = token
-        self.zoobars = bank.balance(username)
+        self.zoobars = bank.zoobars(username)
 
 def logged_in():
     g.user = User()
