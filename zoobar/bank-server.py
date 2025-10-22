@@ -68,6 +68,20 @@ class BankRpcServer(rpclib.RpcServer):
         transferdb.commit()
 
         return True
+    def rpc_get_log(self, username):
+        debug(f"bank_server: fetching log for {username}")
+        db = transfer_setup()
+        logs = db.query(Transfer).filter_by(sender=username).all()
+        result = []
+        for t in logs:
+            result.append({
+                "sender": t.sender,
+                "recipient": t.recipient,
+                "amount": t.amount,
+                "time": t.time
+            })
+        return result
+
 
 if len(sys.argv) != 2:
     print(sys.argv[0], "too few args")

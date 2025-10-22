@@ -37,3 +37,11 @@ def transfer(sender, recipient, zoobars, token):
     except Exception as e:
         debug("bank_client.transfer: RPC error: %r" % (e,))
         return False
+
+def get_log(username):
+    try:
+        conn = _connect_to_bank()
+        return conn.call('get_log', username=username)
+    except Exception as e:
+        debug("bank_client.get_log: RPC error: %r" % (e,))
+        return []

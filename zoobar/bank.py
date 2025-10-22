@@ -13,4 +13,5 @@ def transfer(sender, recipient, zoobars, token):
     return _bank_client.transfer(sender, recipient, zoobars, token)
 
 def get_log(username):
-    raise NotImplementedError("Use bank RPC to fetch audit logs (implement rpc_get_log)")
+    return _bank_client.get_log(username)
+
