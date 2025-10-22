@@ -1,4 +1,77 @@
 #!/usr/bin/env python3
-#
-# Insert bank server code here.
-#
+import rpclib
+import sys
+import time
+
+from debug import *
+from zoodb import *
+import auth_client
+
+class BankRpcServer(rpclib.RpcServer):
+    def rpc_balance(self, username):
+        db = bank_setup()
+        acc = db.query(Bank).get(username)
+        if not acc:
+            return None
+        return acc.balance
+
+    def rpc_create_account(self, username, initial_balance=10):
+        db = bank_setup()
+        acc = db.query(Bank).get(username)
+        if acc:
+            return False
+        newacc = Bank()
+        newacc.username = username
+        newacc.balance = int(initial_balance)
+        db.add(newacc)
+        db.commit()
+        return True
+
+    def rpc_transfer(self, sender, recipient, zoobars, token):
+        if not auth_client.check_token(sender, token):
+            debug("bank_server: invalid token for sender=%s" % sender)
+            return False
+
+        bankdb = bank_setup()
+        transferdb = transfer_setup()
+
+        sender_acc = bankdb.query(Bank).get(sender)
+        recipient_acc = bankdb.query(Bank).get(recipient)
+
+        if not sender_acc or not recipient_acc:
+            debug("bank_server.transfer: Bank missing sender=%s recipient=%s" % (sender, recipient))
+            return False
+
+        try:
+            zoobars = int(zoobars)
+        except Exception:
+            return False
+
+        new_sender = sender_acc.balance - zoobars
+        new_recipient = recipient_acc.balance + zoobars
+        if new_sender < 0 or new_recipient < 0:
+            debug("bank_server.transfer: insufficient funds or overflow")
+            return False
+
+        # update balances
+        sender_acc.balance = new_sender
+        recipient_acc.balance = new_recipient
+        bankdb.commit()
+
+        # registro de transferencia (auditoría)
+        t = Transfer()
+        t.sender = sender
+        t.recipient = recipient
+        t.amount = zoobars
+        t.time = time.asctime()
+        transferdb.add(t)
+        transferdb.commit()
+
+        return True
+
+if len(sys.argv) != 2:
+    print(sys.argv[0], "too few args")
+    sys.exit(1)
+
+s = BankRpcServer()
+s.run_fork(sys.argv[1])

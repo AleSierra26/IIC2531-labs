@@ -35,9 +35,15 @@ class User(object):
                 person.username = username
                 pdb.add(person)
                 pdb.commit()
+            try:
+                import bank
+                bank.create_account(username, 10)
+            except Exception as e:
+                debug("addRegistration: create_account RPC error: %r" % (e,))
             return self.loginCookie(username, token)
         else:
             return None
+
 
     def checkCookie(self, cookie):
         if cookie is None:

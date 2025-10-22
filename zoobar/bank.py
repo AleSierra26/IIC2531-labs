@@ -1,48 +1,16 @@
-from zoodb import *
-from debug import *
-
+# bank.py (cliente wrapper)
 import time
-
-def transfer(sender, recipient, zoobars):
-    persondb = person_setup()
-    senderp = persondb.query(Person).get(sender)
-    recipientp = persondb.query(Person).get(recipient)
-
-    sender_balance = senderp.zoobars - zoobars
-    recipient_balance = recipientp.zoobars + zoobars
-
-    if sender_balance < 0 or recipient_balance < 0:
-        raise ValueError()
-
-    senderp.zoobars = sender_balance
-    recipientp.zoobars = recipient_balance
-    persondb.commit()
-
-    transfer = Transfer()
-    transfer.sender = sender
-    transfer.recipient = recipient
-    transfer.amount = zoobars
-    transfer.time = time.asctime()
-
-    transferdb = transfer_setup()
-    transferdb.add(transfer)
-    transferdb.commit()
+from debug import *
+import bank_client as _bank_client
 
 def balance(username):
-    db = person_setup()
-    person = db.query(Person).get(username)
-    return person.zoobars
+    return _bank_client.balance(username)
+
+def create_account(username, initial_balance=10):
+    return _bank_client.create_account(username, initial_balance)
+
+def transfer(sender, recipient, zoobars, token):
+    return _bank_client.transfer(sender, recipient, zoobars, token)
 
 def get_log(username):
-    db = transfer_setup()
-    l = db.query(Transfer).filter(or_(Transfer.sender==username,
-                                      Transfer.recipient==username))
-    r = []
-    for t in l:
-       r.append({'time': t.time,
-                 'sender': t.sender ,
-                 'recipient': t.recipient,
-                 'amount': t.amount })
-    return r 
-
-
+    raise NotImplementedError("Use bank RPC to fetch audit logs (implement rpc_get_log)")
