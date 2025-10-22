@@ -23,7 +23,7 @@ def users():
             args['profile'] = p_markup
 
             args['user'] = user
-            args['user_zoobars'] = bank.balance(user.username)
+            args['user_zoobars'] = bank.zoobars(user.username)
             args['transfers'] = bank.get_log(user.username)
         else:
             args['warning'] = "Cannot find that user."
