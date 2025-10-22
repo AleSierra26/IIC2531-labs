@@ -8,7 +8,7 @@ from zoodb import *
 import auth_client
 
 class BankRpcServer(rpclib.RpcServer):
-    def rpc_balance(self, username):
+    def rpc_zoobars(self, username):
         db = bank_setup()
         acc = db.query(Bank).get(username)
         if not acc:

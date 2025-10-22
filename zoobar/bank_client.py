@@ -14,12 +14,12 @@ def _connect_to_bank():
         return rpclib.client_connect((ip, int(port)))
     return rpclib.client_connect(('127.0.0.1', 8081))
 
-def balance(username):
+def zoobars(username):
     try:
         conn = _connect_to_bank()
-        return conn.call('balance', username=username)
+        return conn.call('zoobars', username=username)
     except Exception as e:
-        log("bank_client.balance: RPC error: %r" % (e,))
+        log("bank_client.zoobars: RPC error: %r" % (e,))
         return None
 
 def create_account(username, initial_balance=10):

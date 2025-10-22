@@ -3,8 +3,8 @@ import time
 from debug import *
 import bank_client as _bank_client
 
-def balance(username):
-    return _bank_client.balance(username)
+def zoobars(username):
+    return _bank_client.zoobars(username)
 
 def create_account(username, initial_balance=10):
     return _bank_client.create_account(username, initial_balance)
