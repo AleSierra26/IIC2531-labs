@@ -493,9 +493,35 @@ class concolic_int(int):
   def __rsub__(self, o):
     res = o - self.__v
     return concolic_int(sym_minus(ast(o), ast(self)), res)
+  
+  def __mul__(self, o):
+    if isinstance(o, concolic_int):
+      res = self.__v * o.__v
+    else:
+      res = self.__v * o
+    return concolic_int(sym_mul(ast(self), ast(o)), res)
+  
+  def __truediv__(self, o):
+    if isinstance(o, concolic_int):
+      res = self.__v / o.__v
+    else:
+      res = self.__v / o
+    return concolic_int(sym_div(ast(self), ast(o)), res)
+  def __floordiv__(self, o):
+    if isinstance(o, concolic_int):
+      res = self.__v // o.__v
+    else:
+      res = self.__v // o
+    return concolic_int(sym_div(ast(self), ast(o)), res)
 
   ## Exercise 2: your code here.
   ## Implement symbolic division and multiplication.
+class sym_mul(sym_binop):
+  def _z3expr(self):
+    return z3expr(self.a) * z3expr(self.b)
+class sym_div(sym_binop):
+  def _z3expr(self):
+    return z3expr(self.a) / z3expr(self.b)
 
   def _sym_ast(self):
     return self.__sym
