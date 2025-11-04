@@ -16,6 +16,10 @@ def transfer(sender, recipient, zoobars):
     if sender_balance < 0 or recipient_balance < 0:
         raise ValueError()
 
+    if sender == recipient:
+        sender_balance = senderp.zoobars
+        recipient_balance = recipientp.zoobars
+        
     senderp.zoobars = sender_balance
     recipientp.zoobars = recipient_balance
     persondb.commit()
