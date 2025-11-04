@@ -948,6 +948,12 @@ def concolic_force_branch(b, branch_conds, branch_callers, verbose = 1):
   ## https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists
 
   constraint = None
+  
+  condicion_b = branch_conds[b]
+  if (condicion_b != const_bool(True)):
+    constraint = sym_not(condicion_b)
+    for i in range(b):
+      constraint = sym_and(constraint, branch_conds[i])
 
   if verbose > 2:
     callers = branch_callers[b]
