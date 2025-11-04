@@ -90,13 +90,13 @@ def test_stuff():
 
   ## Detect zoobar theft.
   ## When detected, call report_zoobar_theft()
-  username_set = set()
+  usuarios = set()
   for p in pdb.query(zoobar.zoodb.Person).all():
-      username_set.add(p.username)
+      usuarios.add(p.username)
   for transfer in tdb.query(zoobar.zoodb.Transfer).all():
-      if transfer.sender in username_set:
-        username_set.remove(transfer.sender)
-  for username in username_set:
+      if transfer.sender in usuarios:
+        usuarios.remove(transfer.sender)
+  for username in usuarios:
       person = pdb.query(zoobar.zoodb.Person).get(username)
       if person.zoobars < 10:
         report_zoobar_theft()
