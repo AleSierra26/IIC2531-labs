@@ -1010,6 +1010,15 @@ def concolic_execs(func, maxiter = 100, verbose = 0):
     (r, branch_conds, branch_callers) = concolic_exec_input(func, concrete_values, verbose)
     if r not in outs:
       outs.append(r)
+    tamano_branch = len(branch_conds)
+    for i in range(tamano_branch):
+      constraint_actual = concolic_force_branch(i, branch_conds, branch_callers)
+      if constraint_actual not in checked:
+        checked.add(constraint_actual)
+        sat, concrete_values = concolic_find_input(constraint_actual, None)
+        if sat:
+          concrete_values.inherit(concrete_values)
+          inputs.add(concrete_values, branch_callers[i])
 
     ## Exercise 6: your code here.
     ##
