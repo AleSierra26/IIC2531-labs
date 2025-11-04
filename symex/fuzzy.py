@@ -973,7 +973,16 @@ def concolic_find_input(constraint, ok_names, verbose=0):
   ## If Z3 was able to find example inputs that solve this
   ## constraint (i.e., ok == z3.sat), make a new input set
   ## containing the values from Z3's model, and return it.
-  return False, ConcreteValues()
+  (ok, model) = fork_and_check(constraint)
+  cv = ConcreteValues()
+  if ok == z3.sat:
+    sat = True
+    res_names = model.keys() if ok_names is None else ok_names
+    for k in res_names:
+      cv.add(k, model[k])
+  else:
+    sat = False
+  return sat, cv
 
 # Concolic execute func for many different paths and return all
 # computed results for those different paths.
